@@ -1,0 +1,54 @@
+---
+title: "Google Timeline Visualization"
+author: "Rahul Kalluri"
+date: "September 27, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Install packages 
+```{r}
+library(jsonlite)
+library(tibble)
+library(ggplot2)
+library(ggmap)
+```
+
+Import File (Warning: this takes a while)
+```{r}
+data <- fromJSON("mylocationhistory.json")
+```
+
+
+```{r}
+locs <- data$locations
+
+ldf <- data.frame(t=rep(0,nrow(locs)))
+
+# Time is in POSIX * 1000 (milliseconds) format, convert it to useful scale...
+ldf$t <- as.numeric(locs$timestampMs)/1000
+class(ldf$t) <- 'POSIXct'
+ 
+# Convert lat and long for future analysis 
+ldf$lat <- as.numeric(locs$latitudeE7/1E7)
+ldf$lon <- as.numeric(locs$longitudeE7/1E7)
+```
+
+
+Map it out
+```{r}
+# Visualize travel patterns in September so far
+september <- ldf[1:19171,]
+september$ID <- 1:nrow(september)
+
+columbus <- get_map("Columbus", zoom = "auto", source='google',maptype="roadmap")
+```
+
+Overlay data
+```{r}
+ggmap(columbus) + geom_point(data=ldf, aes(lon,lat), color = "Red", alpha = 0.01)
+```
+
